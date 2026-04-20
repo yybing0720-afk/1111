@@ -2,54 +2,42 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>荣誉激励看板 - 最终稳定版</title>
+    <title>荣誉激励看板 - 稳定版</title>
     <style>
         :root { --bg-body: #F9FBF6; --bg-section: #EBF3E4; --primary-green: #6C8E4D; --gold: #D4AF37; --white: #FFFFFF; --gold-light: #FFF9E6; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
         body { background-color: var(--bg-body); color: #333; padding: 20px; }
-        
         .section-wrapper { background-color: var(--bg-section); border-radius: 30px; padding: 25px; margin-bottom: 25px; }
         .section-header { margin-bottom: 20px; font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
-        
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
         .card { background: var(--white); border-radius: 24px; padding: 25px; box-shadow: 0 8px 20px rgba(108,142,77,0.05); display: flex; flex-direction: column; position: relative; }
         .card-title { font-weight: bold; font-size: 18px; margin-bottom: 20px; border-left: 5px solid var(--primary-green); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
-        
         .table-container { flex-grow: 1; height: 420px; overflow-y: auto; padding-right: 5px; }
         .table-container::-webkit-scrollbar { width: 4px; }
         .table-container::-webkit-scrollbar-thumb { background: #D7E8BA; border-radius: 10px; }
         .rank-wrap { flex-grow: 1; }
-
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead th { position: sticky; top: 0; background: #fff; text-align: left; color: #999; font-size: 12px; padding: 10px 0; border-bottom: 2px solid #F5F5F5; z-index: 10; }
         td { padding: 14px 0; border-bottom: 1px solid #F5F5F5; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score-val { color: var(--primary-green); font-weight: 800; text-align: right; }
-
         .btn-more { text-align: center; color: var(--primary-green); font-size: 13px; font-weight: bold; padding-top: 15px; margin-top: auto; cursor: pointer; border-top: 1px dashed #eee; display: flex; justify-content: center; align-items: center; gap: 5px;}
-
-        /* 荣誉殿堂样式 */
         .monthly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
         .honor-person-card { background: linear-gradient(135deg, #ffffff, #f9fbf6); border: 1px solid #e2ebd5; border-radius: 16px; padding: 16px; transition: all 0.2s; }
         .award-tag { color: var(--primary-green); font-size: 11px; font-weight: bold; background: #EBF3E4; padding: 4px 10px; border-radius: 8px; display: inline-block; margin-bottom: 10px; }
         .person-name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
         .person-dept { font-size: 12px; color: #888; }
-        
         .quarterly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-content: start; }
         .honor-team-card { background: linear-gradient(145deg, #fffdf7, #ffffff); border: 1px solid #FEEAAB; border-radius: 20px; padding: 25px 15px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;}
         .team-award-icon { font-size: 32px; margin-bottom: 10px; }
         .team-award-title { color: #b8860b; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
         .team-name { font-size: 18px; font-weight: 900; color: #333; }
-
         select { border: 1px solid #D7E8BA; padding: 6px 14px; border-radius: 12px; font-size: 13px; color: var(--primary-green); outline: none; background: #fff; cursor: pointer; font-weight: bold; }
-
         .annual-card { background: linear-gradient(145deg, #ffffff, #fffdf7); border: 1px solid #FEEAAB; position: relative; overflow: hidden; }
         .annual-award-header { font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 12px; background: #FFF4D1; display: inline-block; padding: 4px 12px; border-radius: 20px; }
         .winner-main { font-size: 24px; font-weight: bold; color: #444; margin-bottom: 4px; }
         .pioneer-row { grid-column: span 3; display: flex; justify-content: space-between; gap: 15px; padding: 20px; background: var(--gold-light); border-radius: 24px; border: 1px dashed #FEEAAB; }
         .pioneer-item { flex: 1; text-align: center; background: #fff; padding: 15px; border-radius: 15px; }
-        
         .loading-overlay { position: fixed; inset: 0; background: var(--white); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3000; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(3px); }
         .modal-content { background: var(--white); width: 650px; max-width: 90%; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.15); animation: popIn 0.3s ease-out; }
@@ -66,7 +54,7 @@
 <div id="rank-modal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header"><span id="modal-title">完整榜单</span><div class="modal-close" onclick="closeModal()">&times;</div></div>
-        <div class="modal-body"><table style="width: 100%;"><thead id="modal-thead"></thead><tbody id="modal-tbody"></tbody></table></div>
+        <div class="modal-body"><table><thead id="modal-thead"></thead><tbody id="modal-tbody"></tbody></table></div>
     </div>
 </div>
 
@@ -117,22 +105,17 @@
     const SPREADSHEET_ID = '1-0_qK3u5CJne-RLwB8ivHNMd2ARa0d1qtuIW1tEsaj8';
     let STATE = { rankData: [], personHonor: [], teamHonor: [], annualHonor: [], pRank: [], tRank: [], nRank: [] };
 
-    // 通用抓取：强制使用坐标位置索引 (col0, col1...)，解决智能表格表头抓不到的问题
     async function fetchSheetData(sheetName) {
         try {
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
             const response = await fetch(url);
             const text = await response.text();
             const json = JSON.parse(text.substr(47).slice(0, -2));
-            
             return json.table.rows.map(row => {
                 const c = row.c || [];
-                // 强制将每一列存入固定的位置属性
                 const getItem = (idx) => c[idx] ? String(c[idx].f || c[idx].v).trim() : "";
-                return {
-                    col0: getItem(0), col1: getItem(1), col2: getItem(2), col3: getItem(3), col4: getItem(4)
-                };
-            }).filter(item => item.col0 && item.col0 !== '季度' && item.col0 !== '月份' && item.col0 !== '年度' && item.col0 !== '姓名'); 
+                return { col0: getItem(0), col1: getItem(1), col2: getItem(2), col3: getItem(3), col4: getItem(4) };
+            }).filter(item => item.col0 && !['季度','月份','年度','姓名'].includes(item.col0));
         } catch (e) { return []; }
     }
 
@@ -141,79 +124,45 @@
             fetchSheetData('积分变动明细'), fetchSheetData('个人荣誉表'), fetchSheetData('团队荣誉表'), fetchSheetData('年度盛典表')
         ]);
         STATE.rankData = d1; STATE.personHonor = d2; STATE.teamHonor = d3; STATE.annualHonor = d4;
-        
         renderRankings();
         initFilters();
-        
-        // 初始触发渲染
-        renderMonthly();
-        renderQuarterly();
-        renderAnnual();
-        
+        renderMonthly(); renderQuarterly(); renderAnnual();
         document.getElementById('loading').style.display = 'none';
     }
 
     function initFilters() {
         const m = [...new Set(STATE.personHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('m-select').innerHTML = m.map(v => `<option value="${v}">${v}</option>`).join('');
-        
         const q = [...new Set(STATE.teamHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('q-select').innerHTML = q.map(v => `<option value="${v}">${v}</option>`).join('');
-        
         const a = [...new Set(STATE.annualHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('a-select').innerHTML = a.map(v => `<option value="${v}">${v}</option>`).join('');
     }
 
-    // --- 月度个人 (0:月份, 1:奖项, 2:获奖人, 3:部门) ---
     function renderMonthly() {
         const val = document.getElementById('m-select').value;
         const list = STATE.personHonor.filter(r => r.col0 === val);
         const container = document.getElementById('m-list');
         if (!list.length) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
-        
-        container.innerHTML = list.map(r => `
-            <div class="honor-person-card">
-                <div class="award-tag">✨ ${r.col1}</div>
-                <div class="person-name">${r.col2}</div>
-                <div class="person-dept">${r.col3 || '---'}</div>
-            </div>
-        `).join('');
+        container.innerHTML = list.map(r => `<div class="honor-person-card"><div class="award-tag">✨ ${r.col1}</div><div class="person-name">${r.col2}</div><div class="person-dept">${r.col3 || '---'}</div></div>`).join('');
     }
 
-    // --- 季度团队 (0:季度, 1:奖项, 2:获奖团队) ---
     function renderQuarterly() {
         const val = document.getElementById('q-select').value;
         const list = STATE.teamHonor.filter(r => r.col0 === val);
         const container = document.getElementById('q-list');
         if (!list.length) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
-
-        const getIcon = (n) => {
-            if (n.includes('冠军')) return '🏆';
-            if (n.includes('先锋')) return '🚀';
-            if (n.includes('突破')) return '💡';
-            if (n.includes('进步')) return '📈';
-            return '🏅';
-        };
-
-        container.innerHTML = list.map(r => `
-            <div class="honor-team-card">
-                <div class="team-award-icon">${getIcon(r.col1)}</div>
-                <div class="team-award-title">${r.col1}</div>
-                <div class="team-name">${r.col2}</div>
-            </div>
-        `).join('');
+        const getIcon = (n) => n.includes('冠军') ? '🏆' : n.includes('先锋') ? '🚀' : n.includes('突破') ? '💡' : n.includes('进步') ? '📈' : '🏅';
+        container.innerHTML = list.map(r => `<div class="honor-team-card"><div class="team-award-icon">${getIcon(r.col1)}</div><div class="team-award-title">${r.col1}</div><div class="team-name">${r.col2}</div></div>`).join('');
     }
 
-    // --- 年度盛典 (0:年度, 1:分类, 2:获得者, 3:部门) ---
     function renderAnnual() {
         const val = document.getElementById('a-select').value;
         const list = STATE.annualHonor.filter(r => r.col0 === val);
         const container = document.getElementById('annual-list');
         if (!list.length) { container.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
-        
         const groups = {}; 
         list.forEach(r => { if (!groups[r.col1]) groups[r.col1] = []; groups[r.col1].push(r); });
-        
         let html = '';
         ['驿路巅峰团队奖', '驿路辉煌团队奖', '年度金牌mentor'].forEach(cat => {
             if (groups[cat]) {
@@ -227,7 +176,7 @@
         container.innerHTML = html;
     }
 
-    // --- 积分排行 (0:姓名, 1:团队, 2:分数, 3:属性, 4:导师) ---
+    // --- 闪光日常逻辑保持不变 ---
     function renderRankings() {
         let pMap = {}; let tMap = {};
         STATE.rankData.forEach(row => {
@@ -240,7 +189,6 @@
         STATE.pRank = Object.values(pMap).sort((a,b) => b.score - a.score);
         STATE.tRank = Object.values(tMap).sort((a,b) => b.score - a.score);
         STATE.nRank = STATE.pRank.filter(u => u.isNew);
-        
         document.getElementById('p-body').innerHTML = STATE.pRank.slice(0, 10).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
         document.getElementById('t-body').innerHTML = STATE.tRank.slice(0, 10).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
         document.getElementById('n-body').innerHTML = STATE.nRank.slice(0, 5).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td>${item.mentor || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
@@ -253,13 +201,12 @@
         const thead = document.getElementById('modal-thead');
         const tbody = document.getElementById('modal-tbody');
         let headHTML = '', bodyHTML = '';
-        if (type === 'p') { title.innerHTML = '👤 个人积分完整榜单'; headHTML = '<tr><th style="width:15%">排名</th><th style="width:25%">姓名</th><th style="width:35%">所属团队</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.pRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
-        else if (type === 't') { title.innerHTML = '🏘️ 团队积分完整榜单'; headHTML = '<tr><th style="width:20%">排名</th><th style="width:50%">团队</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.tRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
-        else if (type === 'n') { title.innerHTML = '⭐ 新人积分完整榜单'; headHTML = '<tr><th style="width:12%">排名</th><th style="width:20%">姓名</th><th style="width:28%">所属团队</th><th style="width:20%">导师</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.nRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td>${item.mentor || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
+        if (type === 'p') { title.innerHTML = '👤 个人积分完整榜单'; headHTML = '<tr><th>排名</th><th>姓名</th><th>团队</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.pRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
+        else if (type === 't') { title.innerHTML = '🏘️ 团队积分完整榜单'; headHTML = '<tr><th>排名</th><th>团队</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.tRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
+        else if (type === 'n') { title.innerHTML = '⭐ 新人积分完整榜单'; headHTML = '<tr><th>排名</th><th>姓名</th><th>团队</th><th>导师</th><th style="text-align:right">积分</th></tr>'; bodyHTML = STATE.nRank.map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td>${item.mentor || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join(''); }
         thead.innerHTML = headHTML; tbody.innerHTML = bodyHTML; overlay.style.display = 'flex';
     }
     function closeModal(event) { if (!event || event.target.id === 'rank-modal' || event.target.classList.contains('modal-close')) document.getElementById('rank-modal').style.display = 'none'; }
-
     window.onload = init;
 </script>
 </body>
