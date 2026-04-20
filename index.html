@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>荣誉激励看板 - 独立筛选增强版</title>
+    <title>荣誉激励看板 - 最终稳定版</title>
     <style>
         :root { --bg-body: #F9FBF6; --bg-section: #EBF3E4; --primary-green: #6C8E4D; --gold: #D4AF37; --white: #FFFFFF; --gold-light: #FFF9E6; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
@@ -117,18 +117,22 @@
     const SPREADSHEET_ID = '1-0_qK3u5CJne-RLwB8ivHNMd2ARa0d1qtuIW1tEsaj8';
     let STATE = { rankData: [], personHonor: [], teamHonor: [], annualHonor: [], pRank: [], tRank: [], nRank: [] };
 
+    // 通用抓取：强制使用坐标位置索引 (col0, col1...)，解决智能表格表头抓不到的问题
     async function fetchSheetData(sheetName) {
         try {
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
             const response = await fetch(url);
             const text = await response.text();
             const json = JSON.parse(text.substr(47).slice(0, -2));
-            const cols = json.table.cols.map(c => (c.label || "").trim()); 
+            
             return json.table.rows.map(row => {
-                let obj = {};
-                row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell ? (cell.f || String(cell.v)) : null; });
-                return obj;
-            });
+                const c = row.c || [];
+                // 强制将每一列存入固定的位置属性
+                const getItem = (idx) => c[idx] ? String(c[idx].f || c[idx].v).trim() : "";
+                return {
+                    col0: getItem(0), col1: getItem(1), col2: getItem(2), col3: getItem(3), col4: getItem(4)
+                };
+            }).filter(item => item.col0 && item.col0 !== '季度' && item.col0 !== '月份' && item.col0 !== '年度' && item.col0 !== '姓名'); 
         } catch (e) { return []; }
     }
 
@@ -141,7 +145,7 @@
         renderRankings();
         initFilters();
         
-        // 初始化加载数据
+        // 初始触发渲染
         renderMonthly();
         renderQuarterly();
         renderAnnual();
@@ -149,101 +153,94 @@
         document.getElementById('loading').style.display = 'none';
     }
 
-    // 初始化下拉框选项（三个下拉框完全独立获取数据源）
     function initFilters() {
-        const m = [...new Set(STATE.personHonor.map(r => r['月份']))].filter(Boolean).sort().reverse();
+        const m = [...new Set(STATE.personHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('m-select').innerHTML = m.map(v => `<option value="${v}">${v}</option>`).join('');
         
-        const q = [...new Set(STATE.teamHonor.map(r => r['季度']))].filter(Boolean).sort().reverse();
+        const q = [...new Set(STATE.teamHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('q-select').innerHTML = q.map(v => `<option value="${v}">${v}</option>`).join('');
         
-        const a = [...new Set(STATE.annualHonor.map(r => r['年度']))].filter(Boolean).sort().reverse();
+        const a = [...new Set(STATE.annualHonor.map(r => r.col0))].filter(Boolean).sort().reverse();
         document.getElementById('a-select').innerHTML = a.map(v => `<option value="${v}">${v}</option>`).join('');
     }
 
-    // --- 独立渲染逻辑 1: 月度个人 ---
+    // --- 月度个人 (0:月份, 1:奖项, 2:获奖人, 3:部门) ---
     function renderMonthly() {
         const val = document.getElementById('m-select').value;
-        const list = STATE.personHonor.filter(r => String(r['月份']).trim() === String(val).trim());
+        const list = STATE.personHonor.filter(r => r.col0 === val);
         const container = document.getElementById('m-list');
-        
-        if (list.length === 0) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">该月度暂无数据</div>'; return; }
+        if (!list.length) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
         
         container.innerHTML = list.map(r => `
             <div class="honor-person-card">
-                <div class="award-tag">✨ ${r['奖项名称']}</div>
-                <div class="person-name">${r['获奖人']}</div>
-                <div class="person-dept">${r['所属部门'] || '---'}</div>
+                <div class="award-tag">✨ ${r.col1}</div>
+                <div class="person-name">${r.col2}</div>
+                <div class="person-dept">${r.col3 || '---'}</div>
             </div>
         `).join('');
     }
 
-    // --- 独立渲染逻辑 2: 季度团队 ---
+    // --- 季度团队 (0:季度, 1:奖项, 2:获奖团队) ---
     function renderQuarterly() {
         const val = document.getElementById('q-select').value;
-        // 关键修复：强制转为字符串并去空格，确保匹配成功
-        const list = STATE.teamHonor.filter(r => String(r['季度']).trim() === String(val).trim());
+        const list = STATE.teamHonor.filter(r => r.col0 === val);
         const container = document.getElementById('q-list');
-        
-        if (list.length === 0) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">该季度暂无数据</div>'; return; }
+        if (!list.length) { container.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
 
         const getIcon = (n) => {
-            if (!n) return '🎖️';
-            const name = String(n);
-            if (name.includes('冠军')) return '🏆';
-            if (name.includes('先锋')) return '🚀';
-            if (name.includes('突破')) return '💡';
-            if (name.includes('进步')) return '📈';
+            if (n.includes('冠军')) return '🏆';
+            if (n.includes('先锋')) return '🚀';
+            if (n.includes('突破')) return '💡';
+            if (n.includes('进步')) return '📈';
             return '🏅';
         };
 
-        // 关键修复：字段名对齐为“获奖团队”
         container.innerHTML = list.map(r => `
             <div class="honor-team-card">
-                <div class="team-award-icon">${getIcon(r['奖项名称'])}</div>
-                <div class="team-award-title">${r['奖项名称'] || '团队奖项'}</div>
-                <div class="team-name">${r['获奖团队'] || '未知团队'}</div>
+                <div class="team-award-icon">${getIcon(r.col1)}</div>
+                <div class="team-award-title">${r.col1}</div>
+                <div class="team-name">${r.col2}</div>
             </div>
         `).join('');
     }
 
-    // --- 独立渲染逻辑 3: 年度盛典 ---
+    // --- 年度盛典 (0:年度, 1:分类, 2:获得者, 3:部门) ---
     function renderAnnual() {
         const val = document.getElementById('a-select').value;
-        const list = STATE.annualHonor.filter(r => String(r['年度']).trim() === String(val).trim());
+        const list = STATE.annualHonor.filter(r => r.col0 === val);
         const container = document.getElementById('annual-list');
-        
-        if (list.length === 0) { container.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:40px;color:#999">该年度暂无数据</div>'; return; }
+        if (!list.length) { container.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:40px;color:#999">暂无数据</div>'; return; }
         
         const groups = {}; 
-        list.forEach(r => { if (!groups[r['奖项分类']]) groups[r['奖项分类']] = []; groups[r['奖项分类']].push(r); });
+        list.forEach(r => { if (!groups[r.col1]) groups[r.col1] = []; groups[r.col1].push(r); });
         
         let html = '';
         ['驿路巅峰团队奖', '驿路辉煌团队奖', '年度金牌mentor'].forEach(cat => {
             if (groups[cat]) {
                 const w = groups[cat][0];
-                html += `<div class="card annual-card"><div class="annual-award-header">👑 ${cat}</div><div class="winner-main">${w['获得者/团队']}</div><div style="font-size:13px;color:#999">${w['所属部门'] || ''}</div></div>`;
+                html += `<div class="card annual-card"><div class="annual-award-header">👑 ${cat}</div><div class="winner-main">${w.col2}</div><div style="font-size:13px;color:#999">${w.col3 || ''}</div></div>`;
             }
         });
         if (groups['驿路先锋运营奖']) {
-            html += `<div class="pioneer-row"><div style="writing-mode:vertical-lr;font-weight:bold;color:#856404;border-right:1px solid #FEEAAB;padding-right:10px">驿路先锋运营奖</div>${groups['驿路先锋运营奖'].map(w => `<div class="pioneer-item"><div style="font-size:18px;font-weight:bold">${w['获得者/团队']}</div><div style="font-size:12px;color:#999">${w['所属部门']||''}</div></div>`).join('')}</div>`;
+            html += `<div class="pioneer-row"><div style="writing-mode:vertical-lr;font-weight:bold;color:#856404;border-right:1px solid #FEEAAB;padding-right:10px">驿路先锋运营奖</div>${groups['驿路先锋运营奖'].map(w => `<div class="pioneer-item"><div style="font-size:18px;font-weight:bold">${w.col2}</div><div style="font-size:12px;color:#999">${w.col3||''}</div></div>`).join('')}</div>`;
         }
         container.innerHTML = html;
     }
 
-    // 积分排行榜逻辑
+    // --- 积分排行 (0:姓名, 1:团队, 2:分数, 3:属性, 4:导师) ---
     function renderRankings() {
         let pMap = {}; let tMap = {};
         STATE.rankData.forEach(row => {
-            const name = row['姓名'], team = row['所属团队'], mentor = row['带教导师'], score = parseFloat(row['变动积分']) || 0;
+            const name = row.col0, team = row.col1, score = parseFloat(row.col2) || 0;
             if(!name) return;
-            if(!pMap[name]) pMap[name] = { name, team, mentor, score: 0, isNew: row['人员属性'] === '新人' };
+            if(!pMap[name]) pMap[name] = { name, team, score: 0, isNew: row.col3 === '新人', mentor: row.col4 };
             pMap[name].score += score;
             if(team) { if(!tMap[team]) tMap[team] = { name: team, score: 0 }; tMap[team].score += score; }
         });
         STATE.pRank = Object.values(pMap).sort((a,b) => b.score - a.score);
         STATE.tRank = Object.values(tMap).sort((a,b) => b.score - a.score);
         STATE.nRank = STATE.pRank.filter(u => u.isNew);
+        
         document.getElementById('p-body').innerHTML = STATE.pRank.slice(0, 10).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
         document.getElementById('t-body').innerHTML = STATE.tRank.slice(0, 10).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
         document.getElementById('n-body').innerHTML = STATE.nRank.slice(0, 5).map((item, i) => `<tr><td>${i+1}</td><td><b>${item.name}</b></td><td>${item.team || '-'}</td><td>${item.mentor || '-'}</td><td class="score-val">${item.score.toLocaleString()}</td></tr>`).join('');
